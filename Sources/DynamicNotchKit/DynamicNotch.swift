@@ -37,6 +37,9 @@ public class DynamicNotch<Content>: ObservableObject where Content: View {
         case auto
     }
 
+    // Hover State
+    @Published var isHovered: Bool = false
+
     private var maxAnimationDuration: Double = 0.8 // This is a timer to de-init the window after closing
     var animation: Animation {
         if #available(macOS 14.0, *), notchStyle == .notch {
@@ -186,6 +189,15 @@ extension DynamicNotch {
             }
         }()
 
+        // Add tracking area for hover
+        let trackingArea = NSTrackingArea(
+            rect: view.bounds,
+            options: [.activeAlways, .mouseEnteredAndExited],
+            owner: self,
+            userInfo: nil
+        )
+        view.addTrackingArea(trackingArea)
+
         let panel = DynamicNotchPanel(
             contentRect: .zero,
             styleMask: [.borderless, .nonactivatingPanel],
@@ -203,5 +215,14 @@ extension DynamicNotch {
         guard let windowController else { return }
         windowController.close()
         self.windowController = nil
+    }
+
+    // Add hover handling methods
+    public func mouseEntered(with event: NSEvent) {
+        isHovered = true
+    }
+
+    public func mouseExited(with event: NSEvent) {
+        isHovered = false
     }
 }
