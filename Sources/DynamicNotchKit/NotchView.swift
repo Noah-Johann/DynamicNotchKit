@@ -23,7 +23,7 @@ struct NotchView<Content>: View where Content: View {
 
                     dynamicNotch.content()
                         .id(dynamicNotch.contentID)
-                        .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: 15) }
+                        .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: 0) }
                         .safeAreaInset(edge: .leading, spacing: 0) { Color.clear.frame(width: 15) }
                         .safeAreaInset(edge: .trailing, spacing: 0) { Color.clear.frame(width: 15) }
 
