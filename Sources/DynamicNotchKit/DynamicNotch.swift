@@ -40,12 +40,12 @@ public class DynamicNotch<Content>: ObservableObject where Content: View {
     // Hover State
     @Published var isHovered: Bool = false
 
-    private var maxAnimationDuration: Double = 0.8 // This is a timer to de-init the window after closing
+    private var maxAnimationDuration: Double = 0.3 // Reduced from 0.8 for snappier transitions
     var animation: Animation {
         if #available(macOS 14.0, *), notchStyle == .notch {
-            Animation.spring(.bouncy(duration: 0.4))
+            Animation.spring(response: 0.3, dampingFraction: 0.7)
         } else {
-            Animation.timingCurve(0.16, 1, 0.3, 1, duration: 0.7)
+            Animation.easeInOut(duration: 0.2)
         }
     }
 
@@ -148,13 +148,14 @@ public extension DynamicNotch {
         }
 
         let notchWidth: CGFloat = 300
-        let notchHeight: CGFloat = screen.frame.maxY - screen.visibleFrame.maxY // menubar height
+        let notchHeight: CGFloat = screen.frame.maxY - screen.visibleFrame.maxY
+        let padding: CGFloat = 5 // Add some padding for easier hover detection
 
         let notchFrame = screen.notchFrame ?? NSRect(
-            x: screen.frame.midX - (notchWidth / 2),
-            y: screen.frame.maxY - notchHeight,
-            width: notchWidth,
-            height: notchHeight
+            x: screen.frame.midX - (notchWidth / 2) - padding,
+            y: screen.frame.maxY - notchHeight - padding,
+            width: notchWidth + (padding * 2),
+            height: notchHeight + (padding * 2)
         )
 
         return notchFrame.contains(NSEvent.mouseLocation)
@@ -183,16 +184,30 @@ extension DynamicNotch {
 
         let view: NSView = {
             switch notchStyle {
-            case .notch: NSHostingView(rootView: NotchView(dynamicNotch: self).foregroundStyle(.white))
-            case .floating: NSHostingView(rootView: NotchlessView(dynamicNotch: self))
-            case .auto: screen.hasNotch ? NSHostingView(rootView: NotchView(dynamicNotch: self).foregroundStyle(.white)) : NSHostingView(rootView: NotchlessView(dynamicNotch: self))
+            case .notch: 
+                let view = NSHostingView(rootView: NotchView(dynamicNotch: self).foregroundStyle(.white))
+                view.wantsLayer = true
+                view.layer?.masksToBounds = true
+                return view
+            case .floating: 
+                let view = NSHostingView(rootView: NotchlessView(dynamicNotch: self))
+                view.wantsLayer = true
+                view.layer?.masksToBounds = true
+                return view
+            case .auto: 
+                let view = screen.hasNotch ? 
+                    NSHostingView(rootView: NotchView(dynamicNotch: self).foregroundStyle(.white)) : 
+                    NSHostingView(rootView: NotchlessView(dynamicNotch: self))
+                view.wantsLayer = true
+                view.layer?.masksToBounds = true
+                return view
             }
         }()
 
-        // Add tracking area for hover
+        // Add tracking area for hover with a larger detection area
         let trackingArea = NSTrackingArea(
-            rect: view.bounds,
-            options: [.activeAlways, .mouseEnteredAndExited],
+            rect: NSRect(x: -5, y: -5, width: view.bounds.width + 10, height: view.bounds.height + 10),
+            options: [.activeAlways, .mouseEnteredAndExited, .inVisibleRect],
             owner: self,
             userInfo: nil
         )
