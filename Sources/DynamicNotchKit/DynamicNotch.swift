@@ -7,69 +7,59 @@
 
 import Combine
 import SwiftUI
-import AppKit
 
 // MARK: - DynamicNotch
 
-public class DynamicNotch<Content>: NSResponder, ObservableObject where Content: View {
+public class DynamicNotch<Content>: ObservableObject where Content: View {
+
+    public var windowController: NSWindowController? // Make public in case user wants to modify the NSPanel
+
+    // Content Properties
+    @Published var content: () -> Content
+    @Published var contentID: UUID
+    @Published var isVisible: Bool = false // Used to animate the fading in/out of the user's view
+
+    // Notch Size
+    @Published var notchWidth: CGFloat = 0
+    @Published var notchHeight: CGFloat = 0
+
+    // Notch Closing Properties
+    @Published var isMouseInside: Bool = false // If the mouse is inside, the notch will not auto-hide
+    private var timer: Timer?
+    var workItem: DispatchWorkItem?
+    private var subscription: AnyCancellable?
+
+    // Notch Style
+    private var notchStyle: Style = .notch
     public enum Style {
         case notch
         case floating
         case auto
     }
 
-    public var windowController: NSWindowController?
-    @Published var content: () -> Content
-    @Published var contentID: UUID
-    @Published var isVisible: Bool = false
-    @Published var notchWidth: CGFloat = 0
-    @Published var notchHeight: CGFloat = 0
-    @Published var isMouseInside: Bool = false
-    @Published public var isHovered: Bool = false
-    
-    private var timer: Timer?
-    var workItem: DispatchWorkItem?
-    private var subscription: AnyCancellable?
-    private var notchStyle: Style = .notch
-    
-    private var maxAnimationDuration: Double = 0.3
+    private var maxAnimationDuration: Double = 0.8 // This is a timer to de-init the window after closing
     var animation: Animation {
         if #available(macOS 14.0, *), notchStyle == .notch {
-            Animation.spring(response: 0.3, dampingFraction: 0.7)
+            Animation.spring(.bouncy(duration: 0.4))
         } else {
-            Animation.easeInOut(duration: 0.2)
+            Animation.timingCurve(0.16, 1, 0.3, 1, duration: 0.7)
         }
     }
 
-    public init(contentID: UUID = .init(), style: Style = .auto, @ViewBuilder content: @escaping () -> Content) {
-        self.content = content
+    /// Makes a new DynamicNotch with custom content and style.
+    /// - Parameters:
+    ///   - content: A SwiftUI View
+    ///   - style: The popover's style. If unspecified, the style will be automatically set according to the screen.
+    public init(contentID: UUID = .init(), style: DynamicNotch.Style = .auto, @ViewBuilder content: @escaping () -> Content) {
         self.contentID = contentID
+        self.content = content
         self.notchStyle = style
-        super.init()
         self.subscription = NotificationCenter.default
             .publisher(for: NSApplication.didChangeScreenParametersNotification)
             .sink { [weak self] _ in
                 guard let self, let screen = NSScreen.screens.first else { return }
                 initializeWindow(screen: screen)
             }
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    // MARK: - Mouse Event Handling
-    
-    override public func mouseEntered(with event: NSEvent) {
-        isHovered = true
-        isMouseInside = true
-        NotificationCenter.default.post(name: NSNotification.Name("NotchHoverStateChanged"), object: nil, userInfo: ["isHovered": true])
-    }
-    
-    override public func mouseExited(with event: NSEvent) {
-        isHovered = false
-        isMouseInside = false
-        NotificationCenter.default.post(name: NSNotification.Name("NotchHoverStateChanged"), object: nil, userInfo: ["isHovered": false])
     }
 }
 
@@ -155,14 +145,13 @@ public extension DynamicNotch {
         }
 
         let notchWidth: CGFloat = 300
-        let notchHeight: CGFloat = screen.frame.maxY - screen.visibleFrame.maxY
-        let padding: CGFloat = 5 // Add some padding for easier hover detection
+        let notchHeight: CGFloat = screen.frame.maxY - screen.visibleFrame.maxY // menubar height
 
         let notchFrame = screen.notchFrame ?? NSRect(
-            x: screen.frame.midX - (notchWidth / 2) - padding,
-            y: screen.frame.maxY - notchHeight - padding,
-            width: notchWidth + (padding * 2),
-            height: notchHeight + (padding * 2)
+            x: screen.frame.midX - (notchWidth / 2),
+            y: screen.frame.maxY - notchHeight,
+            width: notchWidth,
+            height: notchHeight
         )
 
         return notchFrame.contains(NSEvent.mouseLocation)
@@ -189,31 +178,13 @@ extension DynamicNotch {
 
         refreshNotchSize(screen)
 
-        let view = MouseTrackingView(dynamicNotch: self)
-        view.wantsLayer = true
-        view.layer?.masksToBounds = true
-        
-        switch notchStyle {
-        case .notch:
-            view.contentView = NSHostingView(rootView: NotchView(dynamicNotch: self).foregroundStyle(.white))
-        case .floating:
-            view.contentView = NSHostingView(rootView: NotchlessView(dynamicNotch: self))
-        case .auto:
-            if screen.hasNotch {
-                view.contentView = NSHostingView(rootView: NotchView(dynamicNotch: self).foregroundStyle(.white))
-            } else {
-                view.contentView = NSHostingView(rootView: NotchlessView(dynamicNotch: self))
+        let view: NSView = {
+            switch notchStyle {
+            case .notch: NSHostingView(rootView: NotchView(dynamicNotch: self).foregroundStyle(.white))
+            case .floating: NSHostingView(rootView: NotchlessView(dynamicNotch: self))
+            case .auto: screen.hasNotch ? NSHostingView(rootView: NotchView(dynamicNotch: self).foregroundStyle(.white)) : NSHostingView(rootView: NotchlessView(dynamicNotch: self))
             }
-        }
-
-        // Add tracking area for hover with a larger detection area
-        let trackingArea = NSTrackingArea(
-            rect: view.bounds.insetBy(dx: -5, dy: -5),
-            options: [.activeAlways, .mouseEnteredAndExited, .inVisibleRect],
-            owner: view,
-            userInfo: nil
-        )
-        view.addTrackingArea(trackingArea)
+        }()
 
         let panel = DynamicNotchPanel(
             contentRect: .zero,
@@ -223,17 +194,7 @@ extension DynamicNotch {
         )
         panel.contentView = view
         panel.orderFrontRegardless()
-        
-        // Calculate notch position
-        let notchFrame = screen.notchFrame ?? NSRect(
-            x: screen.frame.midX - (notchWidth / 2),
-            y: screen.frame.maxY - notchHeight,
-            width: notchWidth,
-            height: notchHeight
-        )
-        
-        panel.setFrame(notchFrame, display: true)
-        panel.level = .statusBar
+        panel.setFrame(screen.frame, display: false)
 
         windowController = .init(window: panel)
     }
@@ -242,36 +203,5 @@ extension DynamicNotch {
         guard let windowController else { return }
         windowController.close()
         self.windowController = nil
-    }
-}
-
-// MARK: - Mouse Tracking View
-private class MouseTrackingView<T: View>: NSView {
-    weak var dynamicNotch: DynamicNotch<T>?
-    var contentView: NSView? {
-        didSet {
-            oldValue?.removeFromSuperview()
-            if let contentView = contentView {
-                addSubview(contentView)
-                contentView.frame = bounds
-            }
-        }
-    }
-    
-    init(dynamicNotch: DynamicNotch<T>) {
-        super.init(frame: .zero)
-        self.dynamicNotch = dynamicNotch
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    override func mouseEntered(with event: NSEvent) {
-        dynamicNotch?.mouseEntered(with: event)
-    }
-    
-    override func mouseExited(with event: NSEvent) {
-        dynamicNotch?.mouseExited(with: event)
     }
 }
