@@ -70,8 +70,12 @@ public extension DynamicNotch {
     /// Set this DynamicNotch's content.
     /// - Parameter content: A SwiftUI View
     func setContent(contentID: UUID = .init(), content: @escaping () -> Content) {
-        self.content = content
-        self.contentID = .init()
+        DispatchQueue.main.async {
+            self.objectWillChange.send() // Manually notify SwiftUI
+            self.content = content
+            self.contentID = UUID()
+            print("Set content")
+        }
     }
 
     /// Show the DynamicNotch.
