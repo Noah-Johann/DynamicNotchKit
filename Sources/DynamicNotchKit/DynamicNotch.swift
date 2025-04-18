@@ -85,13 +85,13 @@ public extension DynamicNotch {
     func show(on screen: NSScreen = NSScreen.screens[0], for time: Double = 0) {
         func scheduleHide(_ time: Double) {
             let workItem = DispatchWorkItem { self.hide() }
+            self.workItem?.cancel()
             self.workItem = workItem
             DispatchQueue.main.asyncAfter(deadline: .now() + time, execute: workItem)
         }
 
         guard !isVisible else {
             if time > 0 {
-                self.workItem?.cancel()
                 scheduleHide(time)
             }
             return
@@ -99,7 +99,6 @@ public extension DynamicNotch {
         timer?.invalidate()
 
         initializeWindow(screen: screen)
-
         DispatchQueue.main.async {
             withAnimation(self.animation) {
                 self.isVisible = true
@@ -107,7 +106,6 @@ public extension DynamicNotch {
         }
 
         if time != 0 {
-            self.workItem?.cancel()
             scheduleHide(time)
         }
     }
