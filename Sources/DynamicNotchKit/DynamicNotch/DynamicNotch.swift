@@ -138,13 +138,17 @@ public final class DynamicNotch<Expanded, CompactLeading, CompactTrailing>: Obse
         }
     }
 
+    /// A closure that is called whenever the hover state changes.
+    public var onHoverChanged: ((Bool) -> Void)?
+
     /// Updates the hover state of the DynamicNotch, and processes necessary hover behavior.
     /// - Parameter hovering: a boolean indicating whether the mouse is hovering over the notch.
     func updateHoverState(_ hovering: Bool) {
         // Ensure that we only update when the state changes
-        guard state != .hidden, hovering != isHovering else { return }
+        guard hovering != isHovering else { return }
 
         isHovering = hovering
+        onHoverChanged?(hovering)
 
         if hoverBehavior.contains(.hapticFeedback) {
             let performer = NSHapticFeedbackManager.defaultPerformer
@@ -157,7 +161,7 @@ public final class DynamicNotch<Expanded, CompactLeading, CompactTrailing>: Obse
 
 extension DynamicNotch {
     public func expand(on screen: NSScreen = NSScreen.screens[0]) async {
-        await _expand(on: screen, skipHide: false)
+        await _expand(on: screen, skipHide: true)
     }
 
     func _expand(on screen: NSScreen = NSScreen.screens[0], skipHide: Bool) async {
@@ -196,7 +200,7 @@ extension DynamicNotch {
     }
 
     public func compact(on screen: NSScreen = NSScreen.screens[0]) async {
-        await _compact(on: screen, skipHide: false)
+        await _compact(on: screen, skipHide: true)
     }
 
     func _compact(on screen: NSScreen = NSScreen.screens[0], skipHide: Bool) async {
@@ -276,8 +280,8 @@ extension DynamicNotch {
         closePanelTask = Task {
             try? await Task.sleep(for: .seconds(0.4)) // Wait for animation to complete
             guard Task.isCancelled != true else { return }
-            deinitializeWindow()
-            completion?()
+           // deinitializeWindow()
+            //completion?()
         }
     }
 }
