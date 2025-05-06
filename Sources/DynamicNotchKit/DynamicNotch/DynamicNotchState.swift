@@ -23,4 +23,6 @@ public enum DynamicNotchState: Equatable {
 
     /// The notch is hidden.
     case hidden
+    
+    case closed
 }

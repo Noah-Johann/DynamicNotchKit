@@ -67,8 +67,8 @@ struct NotchView<Expanded, CompactLeading, CompactTrailing>: View where Expanded
                 )
                 .padding(.horizontal, 0.5)
                 .frame(
-                    width: dynamicNotch.state != .hidden ? nil : minWidth,
-                    height: dynamicNotch.state != .hidden ? nil : dynamicNotch.notchSize.height
+                    width: dynamicNotch.state != .hidden || dynamicNotch.state != .closed ? nil : minWidth,
+                    height: dynamicNotch.state != .hidden || dynamicNotch.state != .closed ? nil : dynamicNotch.notchSize.height
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             }

@@ -196,7 +196,7 @@ extension DynamicNotch {
 
         // This is the time it takes for the animation to complete
         // See DynamicNotchStyle's animations
-        try? await Task.sleep(for: .seconds(0.4))
+        //try? await Task.sleep(for: .seconds(0.4))
     }
 
     public func compact(on screen: NSScreen = NSScreen.screens[0]) async {
@@ -245,7 +245,26 @@ extension DynamicNotch {
 
         // This is the time it takes for the animation to complete
         // See DynamicNotchStyle's animations
-        try? await Task.sleep(for: .seconds(0.4))
+        //try? await Task.sleep(for: .seconds(0.4))
+    }
+    
+    public func close() async {
+        await withCheckedContinuation { continuation in
+            _close {
+                continuation.resume()
+            }
+        }
+    }
+    
+    func _close(completion: (() -> ())? = nil) {
+        guard state != .closed else {
+            completion?()
+            return
+        }
+        
+        withAnimation(style.closingAnimation) {
+            state = .closed
+        }
     }
 
     public func hide() async {
@@ -280,8 +299,8 @@ extension DynamicNotch {
         closePanelTask = Task {
             try? await Task.sleep(for: .seconds(0.4)) // Wait for animation to complete
             guard Task.isCancelled != true else { return }
-           // deinitializeWindow()
-            //completion?()
+            deinitializeWindow()
+            completion?()
         }
     }
 }
