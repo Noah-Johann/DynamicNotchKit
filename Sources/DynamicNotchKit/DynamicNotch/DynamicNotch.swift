@@ -265,6 +265,8 @@ extension DynamicNotch {
         withAnimation(style.closingAnimation) {
             state = .closed
         }
+        
+        completion?()
     }
 
     public func hide() async {
@@ -297,7 +299,7 @@ extension DynamicNotch {
 
         closePanelTask?.cancel()
         closePanelTask = Task {
-            try? await Task.sleep(for: .seconds(0.4)) // Wait for animation to complete
+           // try? await Task.sleep(for: .seconds(0.4)) // Wait for animation to complete
             guard Task.isCancelled != true else { return }
             deinitializeWindow()
             completion?()
