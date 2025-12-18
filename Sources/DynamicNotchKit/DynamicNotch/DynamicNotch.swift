@@ -52,6 +52,8 @@ import SwiftUI
 ///     await notch.hide()
 /// }
 /// ```
+/// > There is also a `hoverBehavior` property of type ``DynamicNotchHoverBehavior``, which is available to modify how the window behaves when the user hovers over it.
+/// > This can be helpful if you wish to keep the notch open during hover events or add effects such as scaling or haptic feedback.
 ///
 public final class DynamicNotch<Expanded, CompactLeading, CompactTrailing>: ObservableObject, DynamicNotchControllable where Expanded: View, CompactLeading: View, CompactTrailing: View {
     /// Public in case user wants to modify the underlying NSPanel
