@@ -165,6 +165,8 @@ extension DynamicNotch {
     }
 
     func _expand(on screen: NSScreen = NSScreen.screens[0], skipHide: Bool) async {
+        self.windowController?.window?.alphaValue = 1.0
+
         guard state != .expanded else { return }
 
         closePanelTask?.cancel()
@@ -204,6 +206,8 @@ extension DynamicNotch {
     }
 
     func _compact(on screen: NSScreen = NSScreen.screens[0], skipHide: Bool) async {
+        self.windowController?.window?.alphaValue = 1.0
+
         guard state != .compact else { return }
 
         if effectiveStyle(for: screen).isFloating {
@@ -254,6 +258,8 @@ extension DynamicNotch {
     }
     
     func _close(completion: (() -> ())? = nil) async {
+        self.windowController?.window?.alphaValue = 1.0
+
         guard state != .closed else {
             completion?()
             return
@@ -267,6 +273,16 @@ extension DynamicNotch {
         try? await Task.sleep(for: .seconds(0.6))
         
      //   completion?()
+    }
+    
+    public func transparent() async {
+        await _transparent()
+    }
+    
+    private func _transparent() async {
+        withAnimation (.easeInOut(duration: 0.2)) {
+            self.windowController?.window?.alphaValue = 0.0
+        }
     }
 
     public func hide() async {
