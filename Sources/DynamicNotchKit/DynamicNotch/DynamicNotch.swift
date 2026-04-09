@@ -79,7 +79,7 @@ public final class DynamicNotch<Expanded, CompactLeading, CompactTrailing>: Obse
     @Published private(set) var state: DynamicNotchState = .hidden
     @Published private(set) var notchSize: CGSize = .zero
     @Published private(set) var menubarHeight: CGFloat = 0
-    @Published private(set) var isHovering: Bool = false
+    @Published public private(set) var isHovering: Bool = false
 
     private var closePanelTask: Task<(), Never>? // Used to close the panel after hiding completes
 
