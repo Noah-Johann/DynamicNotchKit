@@ -27,6 +27,18 @@ public protocol DynamicNotchControllable {
     ///
     /// - Parameter screen: the screen on which to show the compact notch.
     func compact(on screen: NSScreen) async
+    
+    /// Sets the notch's appereance to be closed, hiding the expanded, leading and trailing content and only showing the base shape.
+    ///
+    /// This method is asynchronous and waits for the animation to complete before returning
+    ///
+    func close() async
+    
+    /// Sets the notch appearance to be the closed state and tranparent.
+    ///
+    /// This method is asynchronous and waits for the animation to complete before returning.
+    ///
+    func transparent() async
 
     /// Sets the notch's appearance to be hidden, hiding all content and deinitializing the window.
     ///

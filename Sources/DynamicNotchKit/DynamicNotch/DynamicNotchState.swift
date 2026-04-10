@@ -21,8 +21,12 @@ public enum DynamicNotchState: Equatable {
     /// The notch is in the compact state, showing the leading and trailing contents.
     case compact
 
-    /// The notch is hidden.
-    case hidden
-    
+    /// The notch is closed..
     case closed
+    
+    /// The notch is closed and transparent, but still active.
+    case transparent
+    
+    /// The notch is completly hidden and the window is deinitialized
+    case hidden
 }
