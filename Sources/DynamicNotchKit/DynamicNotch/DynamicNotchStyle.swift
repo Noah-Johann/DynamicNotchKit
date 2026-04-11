@@ -34,7 +34,7 @@ public enum DynamicNotchStyle: Sendable {
     )
 
     /// Floating style, to be used on screens without a notch
-    case floating(
+    case island(
         cornerRadius: CGFloat
     )
 
@@ -45,7 +45,7 @@ public enum DynamicNotchStyle: Sendable {
     public static let notch: DynamicNotchStyle = .notch(topCornerRadius: 15, bottomCornerRadius: 20)
 
     /// A preset floating style, made to look good in most cases.
-    public static let floating: DynamicNotchStyle = .floating(cornerRadius: 20)
+    public static let island: DynamicNotchStyle = .island(cornerRadius: 30)
 
     var isNotch: Bool {
         if case .notch = self {
@@ -55,8 +55,8 @@ public enum DynamicNotchStyle: Sendable {
         }
     }
 
-    var isFloating: Bool {
-        if case .floating = self {
+    var isIsland: Bool {
+        if case .island = self {
             true
         } else {
             false
@@ -64,11 +64,7 @@ public enum DynamicNotchStyle: Sendable {
     }
 
     var openingAnimation: Animation {
-        if isNotch {
-            .bouncy(duration: 0.4)
-        } else {
-            .snappy(duration: 0.4)
-        }
+        .bouncy(duration: 0.4)
     }
 
     var closingAnimation: Animation {
@@ -85,7 +81,7 @@ extension DynamicNotchStyle: Equatable {
         switch (lhs, rhs) {
         case let (.notch(lhsTop, lhsBottom), .notch(rhsTop, rhsBottom)):
             lhsTop == rhsTop && lhsBottom == rhsBottom
-        case let (.floating(lhsRadius), .floating(rhsRadius)):
+        case let (.island(lhsRadius), .island(rhsRadius)):
             lhsRadius == rhsRadius
         case (.auto, .auto):
             true

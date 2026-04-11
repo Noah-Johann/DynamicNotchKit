@@ -163,11 +163,13 @@ public final class DynamicNotch<Expanded, CompactLeading, CompactTrailing>: Obse
 
 extension DynamicNotch {
     public func expand(on screen: NSScreen = NSScreen.screens[0]) async {
-        await _expand(on: screen, skipHide: true)
+        await _expand(on: screen)
     }
 
-    func _expand(on screen: NSScreen = NSScreen.screens[0], skipHide: Bool) async {
-        self.windowController?.window?.alphaValue = 1.0
+    func _expand(on screen: NSScreen = NSScreen.screens[0]) async {
+        if state == .transparent {
+            self.windowController?.window?.alphaValue = 1.0
+        }
 
         guard state != .expanded else { return }
 
@@ -177,48 +179,27 @@ extension DynamicNotch {
         }
 
         Task { @MainActor in
-            if state != .hidden {
-                if !skipHide {
-                    withAnimation(style.closingAnimation) {
-                        self.state = .hidden
-                    }
-
-                    guard self.state == .hidden else { return }
-
-                    try? await Task.sleep(for: .seconds(0.25))
-                }
-
-                withAnimation(style.conversionAnimation) {
-                    self.state = .expanded
-                }
-            } else {
-                withAnimation(style.openingAnimation) {
-                    self.state = .expanded
-                }
+            withAnimation(style.openingAnimation) {
+                self.state = .expanded
             }
         }
 
-        // This is the time it takes for the animation to complete
-        // See DynamicNotchStyle's animations
         try? await Task.sleep(for: .seconds(0.6))
     }
 
     public func compact(on screen: NSScreen = NSScreen.screens[0]) async {
-        await _compact(on: screen, skipHide: true)
+        await _compact(on: screen)
     }
 
-    func _compact(on screen: NSScreen = NSScreen.screens[0], skipHide: Bool) async {
-        self.windowController?.window?.alphaValue = 1.0
+    func _compact(on screen: NSScreen = NSScreen.screens[0]) async {
+        if state == .transparent {
+            self.windowController?.window?.alphaValue = 1.0
+        }
 
         guard state != .compact else { return }
 
-        if effectiveStyle(for: screen).isFloating {
-            await hide()
-            return
-        }
-
         if disableCompactLeading, disableCompactTrailing {
-            await hide()
+            await close()
             return
         }
 
@@ -228,17 +209,7 @@ extension DynamicNotch {
         }
 
         Task { @MainActor in
-            if state != .hidden {
-                if !skipHide {
-                    withAnimation(style.closingAnimation) {
-                        self.state = .hidden
-                    }
-
-                    try? await Task.sleep(for: .seconds(0.25))
-
-                    guard self.state == .hidden else { return }
-                }
-
+            if state == .expanded {
                 withAnimation(style.conversionAnimation) {
                     self.state = .compact
                 }
@@ -249,21 +220,19 @@ extension DynamicNotch {
             }
         }
 
-        // This is the time it takes for the animation to complete
-        // See DynamicNotchStyle's animations
         try? await Task.sleep(for: .seconds(0.6))
     }
     
     public func close() async {
-            await _close {
-        }
+            await _close()
     }
     
-    func _close(completion: (() -> ())? = nil) async {
-        self.windowController?.window?.alphaValue = 1.0
+    func _close() async {
+        if state == .transparent {
+            self.windowController?.window?.alphaValue = 1.0
+        }
 
         guard state != .closed else {
-            completion?()
             return
         }
         Task { @MainActor in
@@ -273,8 +242,6 @@ extension DynamicNotch {
         }
         
         try? await Task.sleep(for: .seconds(0.6))
-        
-     //   completion?()
     }
     
     public func transparent() async {
@@ -282,8 +249,11 @@ extension DynamicNotch {
     }
     
     private func _transparent() async {
+        await _close()
+        
         withAnimation (.easeInOut(duration: 0.2)) {
             self.windowController?.window?.alphaValue = 0.0
+            state = .transparent
         }
     }
 
@@ -333,7 +303,7 @@ private extension DynamicNotch {
     /// - Returns: the effective style for the screen.
     func effectiveStyle(for screen: NSScreen) -> DynamicNotchStyle {
         if style == .auto {
-            return screen.hasNotch ? .notch : .floating
+            return screen.hasNotch ? .notch : .island
         }
         return style
     }
