@@ -12,8 +12,12 @@ public extension EnvironmentValues {
     @Entry var topNotchSafeAreaInset: CGFloat = 15
     @Entry var bottomNotchSafeAreaInset: CGFloat = 15
     
-    @Entry var horizontalIslandSafeAreaInset: CFloat = 20
-    @Entry var vertivalIslandSafeAreaInset: CGFloat = 20
+    @Entry var horizontalIslandSafeAreaInset: CGFloat = 20
+    @Entry var verticalIslandSafeAreaInset: CGFloat = 20
+    
+    @Entry var notchTopCornerRadius: CGFloat = 25
+    @Entry var notchBottomCornerRadius: CGFloat = 50
+    @Entry var islandCornerRadius: CGFloat = 40
 }
 
 extension EnvironmentValues {

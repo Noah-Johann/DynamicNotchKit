@@ -40,9 +40,17 @@ struct NotchContentView<Expanded, CompactLeading, CompactTrailing>: View where E
             if style.isNotch {
                 NotchView(dynamicNotch: dynamicNotch)
                     .foregroundStyle(.white)
+                    .environment(\.notchTopCornerRadius, dynamicNotch.notchTopCornerRadius)
+                    .environment(\.notchBottomCornerRadius, dynamicNotch.notchBottomCornerRadius)
+                    .environment(\.horizontalNotchSafeAreaInset, dynamicNotch.horizontalNotchSafeAreaInset)
+                    .environment(\.topNotchSafeAreaInset, dynamicNotch.topNotchSafeAreaInset)
+                    .environment(\.bottomNotchSafeAreaInset, dynamicNotch.bottomNotchSafeAreaInset)
             } else {
                 IslandView(dynamicNotch: dynamicNotch)
                     .foregroundStyle(.white)
+                    .environment(\.islandCornerRadius, dynamicNotch.islandCornerRadius)
+                    .environment(\.horizontalIslandSafeAreaInset, dynamicNotch.horizontalIslandSafeAreaInset)
+                    .environment(\.verticalIslandSafeAreaInset, dynamicNotch.verticalIslandSafeAreaInset)
             }
         }
         .shadow(

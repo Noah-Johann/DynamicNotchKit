@@ -80,6 +80,20 @@ public final class DynamicNotch<Expanded, CompactLeading, CompactTrailing>: Obse
     @Published private(set) var notchSize: CGSize = .zero
     @Published private(set) var menubarHeight: CGFloat = 0
     @Published public private(set) var isHovering: Bool = false
+    @Published public private(set) var usedStyle: DynamicNotchStyle = .auto
+    
+    /// CornerRadii
+    @Published public var notchTopCornerRadius: CGFloat = 25
+    @Published public var notchBottomCornerRadius: CGFloat = 50
+    @Published public var islandCornerRadius: CGFloat = 40
+    
+    /// SafeArea Insets
+    @Published public var horizontalNotchSafeAreaInset: CGFloat = 15
+    @Published public var topNotchSafeAreaInset: CGFloat = 15
+    @Published public var bottomNotchSafeAreaInset: CGFloat = 15
+    
+    @Published public var horizontalIslandSafeAreaInset: CGFloat = 20
+    @Published public var verticalIslandSafeAreaInset: CGFloat = 20
 
     private var closePanelTask: Task<(), Never>? // Used to close the panel after hiding completes
 
@@ -135,6 +149,7 @@ public final class DynamicNotch<Expanded, CompactLeading, CompactTrailing>: Obse
             for await _ in sequence.map(\.name) {
                 if let screen = NSScreen.screens.first {
                     initializeWindow(screen: screen)
+                    usedStyle = effectiveStyle(for: screen)
                 }
             }
         }
@@ -176,6 +191,7 @@ extension DynamicNotch {
         closePanelTask?.cancel()
         if state == .hidden || windowController?.window?.screen != screen {
             initializeWindow(screen: screen)
+            usedStyle = effectiveStyle(for: screen)
         }
 
         Task { @MainActor in
@@ -206,6 +222,7 @@ extension DynamicNotch {
         closePanelTask?.cancel()
         if state == .hidden || windowController?.window?.screen != screen {
             initializeWindow(screen: screen)
+            usedStyle = effectiveStyle(for: screen)
         }
 
         Task { @MainActor in

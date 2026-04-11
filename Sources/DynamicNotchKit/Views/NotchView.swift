@@ -12,17 +12,15 @@ struct NotchView<Expanded, CompactLeading, CompactTrailing>: View where Expanded
     @State private var compactLeadingWidth: CGFloat = 0
     @State private var compactTrailingWidth: CGFloat = 0
     private let safeAreaInset: CGFloat = 15
+    
+    @Environment(\.notchTopCornerRadius) private var topExpandedCornerRadius
+    @Environment(\.notchBottomCornerRadius) private var bottomExpandedCornerRadius
+    @Environment(\.topNotchSafeAreaInset) private var topSafeAreaInset
+    @Environment(\.bottomNotchSafeAreaInset) private var bottomSafeAreaInset
+    @Environment(\.horizontalNotchSafeAreaInset) private var horizontalSafeAreaInset
 
     init(dynamicNotch: DynamicNotch<Expanded, CompactLeading, CompactTrailing>) {
         self.dynamicNotch = dynamicNotch
-    }
-
-    private var expandedNotchCornerRadii: (top: CGFloat, bottom: CGFloat) {
-        if case let .notch(topCornerRadius, bottomCornerRadius) = dynamicNotch.style {
-            (top: topCornerRadius, bottom: bottomCornerRadius)
-        } else {
-            (top: 15, bottom: 20)
-        }
     }
 
     private var compactNotchCornerRadii: (top: CGFloat, bottom: CGFloat) {
@@ -34,11 +32,11 @@ struct NotchView<Expanded, CompactLeading, CompactTrailing>: View where Expanded
     }
 
     private var topCornerRadius: CGFloat {
-        dynamicNotch.state == .expanded ? expandedNotchCornerRadii.top : compactNotchCornerRadii.top
+        dynamicNotch.state == .expanded ? topExpandedCornerRadius : compactNotchCornerRadii.top
     }
 
     private var bottomCornerRadius: CGFloat {
-        dynamicNotch.state == .expanded ? expandedNotchCornerRadii.bottom : compactNotchCornerRadii.bottom
+        dynamicNotch.state == .expanded ? bottomExpandedCornerRadius : compactNotchCornerRadii.bottom
     }
 
     private var xOffset: CGFloat {
@@ -145,8 +143,10 @@ struct NotchView<Expanded, CompactLeading, CompactTrailing>: View where Expanded
                     .transition(.blur(intensity: 10).combined(with: .scale(y: 0.6, anchor: .top)).combined(with: .opacity))
             }
         }
-        .safeAreaInset(edge: .leading, spacing: 0) { Color.clear.frame(width: safeAreaInset) }
-        .safeAreaInset(edge: .trailing, spacing: 0) { Color.clear.frame(width: safeAreaInset) }
+        .safeAreaInset(edge: .top, spacing: 0) { Color.clear.frame(height: topSafeAreaInset) }
+        .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: bottomSafeAreaInset) }
+        .safeAreaInset(edge: .leading, spacing: 0) { Color.clear.frame(width: horizontalSafeAreaInset) }
+        .safeAreaInset(edge: .trailing, spacing: 0) { Color.clear.frame(width: horizontalSafeAreaInset) }
         .frame(minWidth: dynamicNotch.notchSize.width)
     }
 }

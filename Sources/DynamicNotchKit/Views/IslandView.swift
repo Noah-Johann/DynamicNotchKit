@@ -13,16 +13,12 @@ struct IslandView<Expanded, CompactLeading, CompactTrailing>: View where Expande
     @State private var compactTrailingWidth: CGFloat = 0
     private let safeAreaInset: CGFloat = 20
     
+    @Environment(\.islandCornerRadius) private var expandedCornerRadius
+    @Environment(\.horizontalIslandSafeAreaInset) private var horizontalSafeAreaInset
+    @Environment(\.verticalIslandSafeAreaInset) private var verticalSafeAreaInset
+    
     init(dynamicNotch: DynamicNotch<Expanded, CompactLeading, CompactTrailing>) {
         self.dynamicNotch = dynamicNotch
-    }
-    
-    private var expanedIslandCornerRadius: CGFloat {
-        if case let .island(cornerRadius) = dynamicNotch.style {
-            cornerRadius
-        } else {
-            30
-        }
     }
     
     private var compactIslandCornerRadius: CGFloat {
@@ -38,7 +34,7 @@ struct IslandView<Expanded, CompactLeading, CompactTrailing>: View where Expande
     }
     
     private var cornerRadius: CGFloat {
-        dynamicNotch.state == .expanded ? expanedIslandCornerRadius : compactIslandCornerRadius
+        dynamicNotch.state == .expanded ? expandedCornerRadius : compactIslandCornerRadius
     }
     
     private var xOffset: CGFloat {
@@ -168,9 +164,10 @@ struct IslandView<Expanded, CompactLeading, CompactTrailing>: View where Expande
             }
         }
         .safeAreaInset(edge: .top, spacing: 0) { Color.clear.frame(height: topIslandPadding)}
-        .safeAreaInset(edge: .top, spacing: 0) { Color.clear.frame(height: 5) }
-        .safeAreaInset(edge: .leading, spacing: 0) { Color.clear.frame(width: safeAreaInset) }
-        .safeAreaInset(edge: .trailing, spacing: 0) { Color.clear.frame(width: safeAreaInset) }
+        .safeAreaInset(edge: .top, spacing: 0) { Color.clear.frame(height: verticalSafeAreaInset) }
+        .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: verticalSafeAreaInset) }
+        .safeAreaInset(edge: .leading, spacing: 0) { Color.clear.frame(width: horizontalSafeAreaInset) }
+        .safeAreaInset(edge: .trailing, spacing: 0) { Color.clear.frame(width: horizontalSafeAreaInset) }
         .frame(minWidth: minWidth)
     }
 }
