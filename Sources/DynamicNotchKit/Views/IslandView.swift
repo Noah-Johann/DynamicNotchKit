@@ -11,7 +11,6 @@ struct IslandView<Expanded, CompactLeading, CompactTrailing>: View where Expande
     @ObservedObject private var dynamicNotch: DynamicNotch<Expanded, CompactLeading, CompactTrailing>
     @State private var compactLeadingWidth: CGFloat = 0
     @State private var compactTrailingWidth: CGFloat = 0
-    private let safeAreaInset: CGFloat = 20
     
     @Environment(\.islandCornerRadius) private var expandedCornerRadius
     @Environment(\.horizontalIslandSafeAreaInset) private var horizontalSafeAreaInset
@@ -26,11 +25,7 @@ struct IslandView<Expanded, CompactLeading, CompactTrailing>: View where Expande
     }
     
     private var minWidth: CGFloat {
-        if dynamicNotch.isHovering && dynamicNotch.state != .expanded {
-            (dynamicNotch.menubarHeight * 4) + (dynamicNotch.menubarHeight * 0.2)
-        } else {
-            dynamicNotch.menubarHeight * 4
-        }
+        dynamicNotch.menubarHeight * 2.8
     }
     
     private var cornerRadius: CGFloat {
@@ -47,32 +42,20 @@ struct IslandView<Expanded, CompactLeading, CompactTrailing>: View where Expande
     
     private var topIslandPadding: CGFloat {
         if dynamicNotch.state == .expanded {
-            dynamicNotch.menubarHeight * 0.1
+            dynamicNotch.menubarHeight * 0.2
         } else {
             dynamicNotch.menubarHeight * 0.05
         }
     }
     
-    private var bottomIslandPadding: CGFloat {
-        if dynamicNotch.state == .expanded {
-            0
+    private var islandHeight: CGFloat {
+        if dynamicNotch.isHovering {
+            dynamicNotch.menubarHeight
         } else {
-            if dynamicNotch.isHovering {
-                0
-            } else {
-                dynamicNotch.menubarHeight * 0.05
-            }
+            dynamicNotch.menubarHeight - (2 * topIslandPadding)
         }
     }
-    
-    private var horizontalIslandPadding: CGFloat {
-        if dynamicNotch.state != .expanded && dynamicNotch.isHovering {
-            dynamicNotch.menubarHeight * 0.1
-        } else {
-            0
-        }
-    }
- 
+
     private var compactXOffset: CGFloat {
         (compactTrailingWidth - compactLeadingWidth) / 2
     }
@@ -86,10 +69,8 @@ struct IslandView<Expanded, CompactLeading, CompactTrailing>: View where Expande
             }
             .mask {
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
                     .padding(.top, topIslandPadding)
-                    .padding(.bottom, bottomIslandPadding)
-                    .padding(.horizontal, horizontalIslandPadding)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             }
             .offset(x: xOffset)
             .animation(.smooth, value: [compactLeadingWidth, compactTrailingWidth])
@@ -102,7 +83,7 @@ struct IslandView<Expanded, CompactLeading, CompactTrailing>: View where Expande
                 .offset(x: dynamicNotch.state == .compact ? 0 : compactXOffset)
                 .frame(
                     width: dynamicNotch.state == .compact ? minWidth + compactLeadingWidth + compactTrailingWidth : minWidth,
-                    height: dynamicNotch.menubarHeight - topIslandPadding - bottomIslandPadding
+                    height: islandHeight
                 )
 
             expandedContent()
@@ -114,7 +95,7 @@ struct IslandView<Expanded, CompactLeading, CompactTrailing>: View where Expande
                 .offset(x: dynamicNotch.state == .compact ? -compactXOffset : 0)
         }
         .fixedSize()
-        .frame(minWidth: minWidth, minHeight: dynamicNotch.menubarHeight - topIslandPadding - bottomIslandPadding)
+        .frame(minWidth: minWidth, minHeight: islandHeight)
         .onHover(perform: dynamicNotch.updateHoverState)
     }
     
@@ -124,26 +105,26 @@ struct IslandView<Expanded, CompactLeading, CompactTrailing>: View where Expande
                 dynamicNotch.compactLeadingContent
                     .environment(\.notchSection, .compactLeading)
                     .safeAreaInset(edge: .top, spacing: 0) { Color.clear.frame(height: topIslandPadding + 6) }
-                    .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: bottomIslandPadding + 6) }
-                    .safeAreaInset(edge: .leading, spacing: 0) { Color.clear.frame(width: horizontalIslandPadding + 6) }
+                    .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: 6) }
+                    .safeAreaInset(edge: .leading, spacing: 0) { Color.clear.frame(width: 6) }
                     .onGeometryChange(for: CGFloat.self, of: \.size.width) { compactLeadingWidth = $0 }
                     .transition(.blur(intensity: 10).combined(with: .scale(x: 0, anchor: .trailing)).combined(with: .opacity))
             }
 
             Spacer()
-                .frame(width: dynamicNotch.menubarHeight * 4)
+                .frame(width: minWidth)
 
             if dynamicNotch.state == .compact, !dynamicNotch.disableCompactTrailing {
                 dynamicNotch.compactTrailingContent
                     .environment(\.notchSection, .compactTrailing)
                     .safeAreaInset(edge: .top, spacing: 0) { Color.clear.frame(height: topIslandPadding + 6) }
-                    .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: bottomIslandPadding + 6) }
-                    .safeAreaInset(edge: .trailing, spacing: 0) { Color.clear.frame(width: horizontalIslandPadding + 6) }
+                    .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: 6) }
+                    .safeAreaInset(edge: .trailing, spacing: 0) { Color.clear.frame(width: 6) }
                     .onGeometryChange(for: CGFloat.self, of: \.size.width) { compactTrailingWidth = $0 }
                     .transition(.blur(intensity: 10).combined(with: .scale(x: 0, anchor: .leading)).combined(with: .opacity))
             }
         }
-        .frame(height: dynamicNotch.menubarHeight)
+        .frame(height: islandHeight)
         .onChange(of: dynamicNotch.disableCompactLeading) { _ in
             if dynamicNotch.disableCompactLeading {
                 compactLeadingWidth = 0
