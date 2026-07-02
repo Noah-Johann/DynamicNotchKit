@@ -104,7 +104,7 @@ struct NotchView<Expanded, CompactLeading, CompactTrailing>: View where Expanded
                     .environment(\.notchSection, .compactLeading)
                     .safeAreaInset(edge: .leading, spacing: 0) { Color.clear.frame(width: 8) }
                     .safeAreaInset(edge: .top, spacing: 0) { Color.clear.frame(height: 4) }
-                    .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: 8) }
+                    .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: 4) }
                     .onGeometryChange(for: CGFloat.self, of: \.size.width) { compactLeadingWidth = $0 }
                     .transition(.blur(intensity: 10).combined(with: .scale(x: 0, anchor: .trailing)).combined(with: .opacity))
             }
@@ -117,7 +117,7 @@ struct NotchView<Expanded, CompactLeading, CompactTrailing>: View where Expanded
                     .environment(\.notchSection, .compactTrailing)
                     .safeAreaInset(edge: .trailing, spacing: 0) { Color.clear.frame(width: 8) }
                     .safeAreaInset(edge: .top, spacing: 0) { Color.clear.frame(height: 4) }
-                    .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: 8) }
+                    .safeAreaInset(edge: .bottom, spacing: 0) { Color.clear.frame(height: 4) }
                     .onGeometryChange(for: CGFloat.self, of: \.size.width) { compactTrailingWidth = $0 }
                     .transition(.blur(intensity: 10).combined(with: .scale(x: 0, anchor: .leading)).combined(with: .opacity))
             }
